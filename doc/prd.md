@@ -1,20 +1,20 @@
-# Product Requirements Document: MyStore Product Management Application
+# Product Requirements Document: Lab 02 - Product Management Application (Razor Pages & SignalR)
 
 ## Product Overview
 
-**Product Vision:** A streamlined, real-time internal web application that enables store managers and employees to securely and efficiently manage product inventory and categories with instant data synchronization.
+**Product Vision:** A streamlined, real-time internal web application that enables store managers and employees to securely and efficiently manage product inventory and categories with instant data synchronization, deployed via a modern containerized cloud architecture.
 
 **Target Users:** Primary users are Store Employees (managing daily stock); Secondary users are Store Managers (overseeing inventory and system access).
 
-**Business Objectives:** * Transition the legacy/local database system to a scalable cloud environment using PostgreSQL.
+**Business Objectives:** * Transition the legacy/local database system to a scalable, distributed cloud environment.
 
-* Eliminate data inconsistency by providing real-time inventory updates across all active user sessions.
-* Secure internal data through role-based access control and session management.
+* Eliminate data inconsistency by providing real-time inventory updates across all active user sessions using WebSockets.
+* Maximize free-tier infrastructure by decoupling the application: hosting the Web App container on Render and the MS SQL Server on MonsterASP.NET.
 
 **Success Metrics:** * 100% real-time synchronization success rate for active client sessions upon inventory updates.
 
-* Zero unauthorized data access incidents.
-* Application and database deployment successfully operating within cloud free-tier limits without performance degradation.
+* Successful automated deployment of the Docker container on Render without exceeding the 500-hour monthly free-tier limit.
+* Application maintains stable read/write operations to the external MonsterASP.NET SQL Server under 500ms.
 
 ---
 
@@ -42,18 +42,30 @@
 | --- | --- | --- | --- | --- | --- |
 | **Authentication & Authorization** | Session-based login using MemberId and Password. | As a user, I want to log in securely so that I can access internal store data based on my role. | Must | - Validate credentials against `AccountMember` table.<br>
 
+<br>
+
 <br>- Grant access only to Role 1 or Role 2.<br>
 
-<br>- Redirect unauthorized/unauthenticated users to the Login page. | Database connection |
-| **Product CRUD Operations** | Interface to Create, Read, Update, and Delete products. | As an employee, I want to add, edit, and remove products so the inventory is always accurate. | Must | - Forms validate required fields (Name, Price, Stock).<br>
+<br>
+
+<br>- Redirect unauthorized users to `/Login`. | External DB connection |
+| **Product CRUD Operations** | Interface to Create, Read, Update, and Delete products via Razor Pages. | As an employee, I want to add, edit, and remove products so the inventory is always accurate. | Must | - Forms validate required fields (Name, Price, Stock).<br>
+
+<br>
 
 <br>- Dropdown provided for selecting Categories.<br>
 
-<br>- Successful operations update the PostgreSQL DB. | EF Core Setup, Category Data |
+<br>
+
+<br>- Operations directly update the MS SQL DB. | EF Core Setup, Category Data |
 | **Real-time Data Synchronization** | Broadcast inventory changes to all connected clients. | As an employee, I want the product list to automatically refresh when someone else makes an update. | Must | - SignalR Hub triggers `LoadAllItems` event on Create/Edit/Delete.<br>
 
-<br>- Connected clients automatically refresh the product table without manual page reloads. | SignalR configuration |
+<br>
+
+<br>- Connected clients automatically refresh the table via JavaScript. | SignalR configuration, Render WebSockets |
 | **Category Management** | Read operations for category mappings. | As an admin, I want products categorized accurately so they are easy to filter and find. | Should | - `CategoryName` displays alongside `ProductId` in the UI.<br>
+
+<br>
 
 <br>- Categories are fetched directly from the database. | Product CRUD |
 
@@ -63,7 +75,7 @@
 
 ### Flow 1: Secure Login & Session Initialization
 
-1. User navigates to the application URL (`/Login`).
+1. User navigates to the application URL on Render (`https://[app-name].onrender.com/Login`).
 2. User inputs `MemberId` and `MemberPassword`.
 3. System calls `AccountService.GetAccountById()`.
 4. System verifies credentials and checks `MemberRole` (Must be 1 or 2).
@@ -94,24 +106,18 @@
 
 * **Load Time:** Initial page load under 2 seconds.
 * **Concurrent Users:** Supports up to 50 concurrent active SignalR connections (sufficient for internal store usage).
-* **Response Time:** Database queries via EF Core should resolve in under 500ms.
+* **Cold Starts:** Acknowledge that the Render free-tier container may sleep after 15 minutes of inactivity, requiring ~30 seconds to spin up on the next request.
 
 ### Security
 
 * **Authentication:** Standard ASP.NET Core Session management with a 20-minute idle timeout.
-* **Authorization:** Role-based checks integrated into PageModel `OnGetAsync` and `OnPostAsync` methods.
-* **Data Protection:** Connection strings must be stored securely using environment variables or cloud secrets management, not hardcoded in `appsettings.json` for production.
+* **Data Protection:** The MS SQL Server connection string MUST NOT be hardcoded in `appsettings.json`. It must be injected securely at runtime using Render's Environment Variables dashboard.
 
 ### Compatibility
 
 * **Devices:** Desktop workstations, POS terminals, and standard tablets.
 * **Browsers:** Modern browsers (Chrome 90+, Edge 90+, Firefox 88+, Safari 14+).
-* **Screen Sizes:** Responsive design utilizing Bootstrap (built-in with ASP.NET Core Razor Pages templates).
-
-### Accessibility
-
-* **Compliance Level:** WCAG 2.1 AA (baseline).
-* **Specific Requirements:** Proper ARIA labels for form inputs, semantic HTML for tables, and clear visual validation error states.
+* **Screen Sizes:** Responsive design utilizing Bootstrap 5.
 
 ---
 
@@ -121,6 +127,8 @@
 
 ```text
 ProductManagementSolution/
+├── Dockerfile                   # CRITICAL: Multi-stage build instructions for Render
+├── .dockerignore                # Exclude bin/obj folders from build context
 ├── BusinessObjects/             # Class Library (.dll)
 │   ├── Models/                  # Product, Category, AccountMember
 │   └── MyStoreContext.cs        # EF Core DbContext
@@ -131,64 +139,58 @@ ProductManagementSolution/
 ├── Repositories/                # Class Library (.dll)
 │   ├── IProductRepository.cs
 │   ├── ProductRepository.cs
-│   └── ... (Category & Account)
+│   └── ... 
 ├── Services/                    # Class Library (.dll)
 │   ├── IProductService.cs
 │   ├── ProductService.cs
-│   └── ... (Category & Account)
+│   └── ... 
 └── ProductManagementRazorPages/ # ASP.NET Core Web App
     ├── Pages/
-    │   ├── Products/            # Create, Index, Edit, Details, Delete
-    │   ├── Login.cshtml
-    │   └── Shared/
+    │   ├── Products/            
+    │   └── Login.cshtml
     ├── wwwroot/
-    │   ├── js/
-    │   │   ├── site.js          # SignalR client logic
-    │   │   └── microsoft/signalr/
+    │   └── js/
+    │       ├── site.js          # SignalR client logic
+    │       └── microsoft/signalr/
     ├── Hubs/
     │   └── SignalrServer.cs     # SignalR Hub
-    ├── Program.cs               # DI, Pipeline, Session & SignalR Config
-    └── appsettings.json         # PostgreSQL Connection String
+    ├── Program.cs               
+    └── appsettings.json         
 
 ```
 
 ### Frontend
 
 * **Technology Stack:** HTML5, CSS3, JavaScript (ES6), ASP.NET Core Razor Pages.
-* **Design System:** Bootstrap 5 (Standard template integration).
-* **Responsive Design:** Required for standard table displays; forms must utilize mobile-friendly input types.
-* **Real-Time Client:** `@microsoft/signalr` fetched via LibMan (unpkg).
+* **Design System:** Bootstrap 5.
+* **Real-Time Client:** `@microsoft/signalr` fetched via LibMan.
 
 ### Backend
 
 * **Technology Stack:** C#, ASP.NET Core 8.0, SignalR.
-* **Architecture:** N-Tier Layered Architecture (Presentation -> Service -> Repository -> DAO).
-* **Dependency Injection:** Scoped lifecycles for Services and Repositories.
+* **Architecture:** N-Tier Layered Architecture.
 
 ### Database
 
-* **Database:** **PostgreSQL** (Migrating from SQL Server).
-* **ORM:** Entity Framework Core (`Npgsql.EntityFrameworkCore.PostgreSQL` version 8.x instead of `Microsoft.EntityFrameworkCore.SqlServer`).
-* **Structure:** - `AccountMember` (MemberId, MemberPassword, FullName, EmailAddress, MemberRole)
-* `Categories` (CategoryId, CategoryName)
-* `Products` (ProductId, ProductName, CategoryId, UnitsInStock, UnitPrice)
+* **Database:** **MS SQL Server 2025** (Hosted remotely via MonsterASP.NET).
+* **ORM:** Entity Framework Core (`Microsoft.EntityFrameworkCore.SqlServer` version 8.x).
+* **Design:** The database entity-relationship design and N-Tier architecture are mapped out and maintained using Visual Paradigm to ensure accurate scaffolding.
 
+### Infrastructure & Deployment
 
-
-### Infrastructure
-
-* **Hosting:** Cloud Platform (e.g., Render, Heroku, or AWS Elastic Beanstalk).
-* **Database Hosting:** Managed PostgreSQL provider with a generous free tier (e.g., Supabase, Neon.tech, or ElephantSQL).
-* **CI/CD:** GitHub Actions configured to build the .NET solution and deploy to the selected cloud hosting provider.
+* **Containerization:** Linux-based Docker image using official Microsoft .NET 8 SDK (for build) and ASP.NET Core Runtime (for execution).
+* **Web Hosting:** Render Web Service (Free Tier).
+* **Database Hosting:** MonsterASP.NET MS SQL Database (1GB limit).
+* **CI/CD:** Connect Render directly to the GitHub repository. Render will automatically trigger a new Docker build and deployment upon every push to the `main` branch.
+* **DNS Configuration:** Custom domain mapping can be configured via external DNS hosting providers by setting up a CNAME record pointing to the `.onrender.com` address.
 
 ---
 
 ## Analytics & Monitoring
 
-* **Key Metrics:** Number of active SignalR connections, daily active users, CRUD operation error rates.
+* **Key Metrics:** Number of active SignalR connections, daily active users.
 * **Events:** Failed login attempts (Unauthorized access tracking).
-* **Dashboards:** Built-in cloud provider metrics (CPU, RAM, DB Connections).
-* **Alerting:** Alert if PostgreSQL database connection pool reaches 80% capacity (crucial for free-tier DBs).
+* **Dashboards:** Use Render's built-in metrics (Logs, Bandwidth) and MonsterASP.NET's Control Panel for database health.
 
 ---
 
@@ -196,46 +198,14 @@ ProductManagementSolution/
 
 ### MVP (v1.0)
 
-* **Features:** Secure Session Login, N-Tier Architecture, CRUD operations for Products via Razor Pages, Entity Framework Core integration with PostgreSQL, Real-time list updates via SignalR.
+* **Features:** Secure Session Login, N-Tier Architecture, Razor Pages CRUD, EF Core integration with MS SQL Server, Real-time list updates via SignalR, full Docker containerization.
 * **Timeline:** 2 Weeks.
-* **Success Criteria:** Application successfully deployed to the cloud, reading and writing to the cloud PostgreSQL database, with SignalR events firing correctly across multiple devices.
-
-### Future Releases
-
-* **v1.1:** Add Category management (CRUD for categories). Implement password hashing (e.g., BCrypt) replacing plain-text passwords.
-* **v1.2:** Add pagination, filtering, and search functionality to the Product Index page to handle larger datasets.
-* **v2.0:** Implement JWT-based authentication to support a potential mobile app frontend alongside the Web App.
+* **Success Criteria:** Application successfully deployed via Docker to Render, seamlessly connecting to the MonsterASP database, with SignalR WebSockets firing correctly.
 
 ---
 
 ## Open Questions & Assumptions
 
-* **Question 1:** Since we are moving to PostgreSQL, does the existing legacy `MyStore` database need to be migrated via a script, or will we start with a fresh seed data script using EF Core Migrations? - **The existing database schema is preserved, and a migration script will be generated to update the schema in the new PostgreSQL database.**
-* **Question 2:** Will the free tier of the chosen cloud provider support WebSockets natively without required workarounds for SignalR to function optimally? - **The free tier of the chosen cloud provider supports WebSockets natively, and no workarounds are required for SignalR to function optimally.**
-* **Assumption 1:** The `appsettings.json` provided in the lab uses `TrustServerCertificate=True` for local SQL server. We assume a proper SSL/TLS connection string will be provided for the cloud PostgreSQL instance. - **The `appsettings.json` file will be updated to use a proper SSL/TLS connection string for the cloud PostgreSQL instance, and `TrustServerCertificate=True` will be removed.**
-* **Assumption 2:** Passwords in the lab's `AccountMember` table are stored in plain text. It is assumed this is strictly for MVP/Lab purposes and will be addressed in v1.1. - **The passwords in the AccountMember table will be hashed using BCrypt in v1.1.**
-
----
-
-## Appendix
-
-### Competitive Analysis
-
-* **Competitor 1 (Off-the-shelf POS Systems):** Strengths: Feature-rich. Weaknesses: High subscription costs, closed ecosystem.
-* **Competitor 2 (Excel/Google Sheets):** Strengths: Free, highly customizable. Weaknesses: Lacks strict data validation, poor concurrent user handling, no real-time push events for UI.
-
-### User Research Findings
-
-* **Finding 1:** Store employees often overlap their duties; if two employees update stock simultaneously on a static page, the last save overwrites accurate data. Real-time updates (SignalR) are a critical mitigation.
-* **Finding 2:** Cloud deployment is necessary as the store plans to allow managers to check stock levels remotely, which the local SQL Server setup prevented.
-
-### AI Conversation Insights
-
-* **AI-Suggested Improvements:** The shift from SQL Server to PostgreSQL requires changing the EF Core NuGet package to `Npgsql.EntityFrameworkCore.PostgreSQL`. The scaffolding command (`dotnet ef dbcontext scaffold`) will need to be updated to use the PostgreSQL connection string format and the Npgsql provider.
-* **AI-Generated Edge Cases:** Session timeouts mid-operation. If a user spends 25 minutes filling out the "Create Product" form and hits submit, the session will have expired (20 min limit). The application must handle this gracefully and redirect to login without crashing.
-
-### Glossary
-
-* **SignalR:** A software library for ASP.NET developers that simplifies the process of adding real-time web functionality to applications.
-* **N-Tier Architecture:** A software architecture pattern where the application is separated into logical layers (Presentation, Business Logic, Data Access) to improve maintainability.
-* **EF Core (Entity Framework Core):** An open-source object-relational mapping (ORM) framework for ADO.NET, allowing developers to work with a database using .NET objects.
+* **Assumption 1:** Render supports WebSockets natively on their free tier, which guarantees that SignalR will function without falling back to long-polling.
+* **Assumption 2:** The MonsterASP.NET MS SQL Server allows remote connections from Render's dynamic IP addresses. The connection string must include `TrustServerCertificate=True` to bypass SSL certificate validation errors during the server-to-server handshake.
+* **Assumption 3:** Passwords in the `AccountMember` table are stored in plain text strictly for MVP/Lab demonstration purposes.

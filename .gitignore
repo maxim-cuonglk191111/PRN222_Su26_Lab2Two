@@ -1,0 +1,45 @@
+## Build output
+bin/
+obj/
+
+## Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## NuGet
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+
+## ASP.NET Core
+**/appsettings.Development.json
+**/appsettings.*.json
+!**/appsettings.json
+
+## Secrets & credentials
+*.pfx
+*.p12
+secrets.json
+**/.env
+
+## Logs & temp
+*.log
+logs/
+tmp/
+temp/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Docker
+docker-compose.override.yml
+
+## Publish output
+publish/
