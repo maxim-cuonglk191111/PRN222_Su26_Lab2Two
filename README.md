@@ -35,7 +35,7 @@ This project is fully containerized via Docker and optimized for free-tier cloud
 
 ### 1. Database Setup (MonsterASP.NET)
 1. Go to **MonsterASP.NET** and create a free MS SQL Server database.
-2. Connect to your remote database using SSMS (SQL Server Management Studio).
+2. Use the **Local Access** for website (Web SQL tool) provided in the MonsterASP Control Panel to access your database.
 3. Execute the `doc/db_lab02.sql` script provided in the `doc` folder.
    - *This automatically isolates your tables inside the `[lab2]` schema, allowing multiple projects to share the single 1GB free tier without data collisions.*
 4. Copy your Database Connection String provided by MonsterASP.
