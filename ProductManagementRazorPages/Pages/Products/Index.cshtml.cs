@@ -16,12 +16,12 @@ public class IndexModel : PageModel
 
     public List<Product> Products { get; set; } = new();
 
-    public IActionResult OnGet()
+    public async Task<IActionResult> OnGetAsync()
     {
-        if (HttpContext.Session.GetInt32("MemberId") == null)
+        if (HttpContext.Session.GetString("UserId") == null)
             return RedirectToPage("/Login");
 
-        Products = _productService.GetProducts();
+        Products = await _productService.GetAllAsync();
         return Page();
     }
 }

@@ -1,16 +1,9 @@
 using BusinessObjects.Models;
 using Repositories;
-
 namespace Services;
-
-public class AccountService : IAccountService
-{
-    private readonly IAccountRepository _accountRepository;
-
-    public AccountService(IAccountRepository accountRepository)
-    {
-        _accountRepository = accountRepository;
-    }
-
-    public AccountMember? GetAccountById(int memberId) => _accountRepository.GetAccountById(memberId);
+public class AccountService : IAccountService {
+    private readonly IAccountRepository _repo;
+    public AccountService(IAccountRepository repo) => _repo = repo;
+    public Task<AccountMember?> GetAccountByEmailAsync(string email) => _repo.GetAccountByEmailAsync(email);
+    public Task<AccountMember?> GetAccountByIdAsync(string id) => _repo.GetAccountByIdAsync(id);
 }

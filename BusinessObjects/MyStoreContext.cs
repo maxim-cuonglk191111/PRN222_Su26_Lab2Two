@@ -7,44 +7,43 @@ public class MyStoreContext : DbContext
 {
     public MyStoreContext(DbContextOptions<MyStoreContext> options) : base(options) { }
 
-    public DbSet<Product> Products { get; set; }
-    public DbSet<Category> Categories { get; set; }
     public DbSet<AccountMember> AccountMembers { get; set; }
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<Product> Products { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // All tables live in the [store] schema – keeps multiple projects
+        // isolated in the shared MonsterASP.NET database instance.
         modelBuilder.HasDefaultSchema("lab2");
 
-        modelBuilder.Entity<AccountMember>(entity =>
+        modelBuilder.Entity<AccountMember>(e =>
         {
-            entity.ToTable("AccountMember", "lab2");
-            entity.HasKey(a => a.MemberId);
-            entity.Property(a => a.MemberId).ValueGeneratedNever();
-            entity.Property(a => a.MemberPassword).IsRequired().HasMaxLength(100);
-            entity.Property(a => a.MemberRole).IsRequired();
+            e.ToTable("AccountMember");
+            e.HasKey(a => a.MemberID);
+            e.HasIndex(a => a.EmailAddress)
+             .IsUnique()
+             .HasDatabaseName("UQ_AccountMember_Email");
         });
 
-        modelBuilder.Entity<Category>(entity =>
+        modelBuilder.Entity<Category>(e =>
         {
-            entity.ToTable("Category", "lab2");
-            entity.HasKey(c => c.CategoryId);
-            entity.Property(c => c.CategoryId).UseIdentityColumn();
-            entity.Property(c => c.CategoryName).IsRequired().HasMaxLength(100);
+            e.ToTable("Categories");
+            e.HasIndex(c => c.CategoryName)
+             .IsUnique()
+             .HasDatabaseName("UQ_Categories_Name");
         });
 
-        modelBuilder.Entity<Product>(entity =>
+        modelBuilder.Entity<Product>(e =>
         {
-            entity.ToTable("Product", "lab2");
-            entity.HasKey(p => p.ProductId);
-            entity.Property(p => p.ProductId).UseIdentityColumn();
-            entity.Property(p => p.ProductName).IsRequired().HasMaxLength(200);
-            entity.Property(p => p.UnitPrice).IsRequired().HasColumnType("decimal(18,2)");
-            entity.Property(p => p.UnitsInStock).IsRequired();
-
-            entity.HasOne(p => p.Category)
-                  .WithMany(c => c.Products)
-                  .HasForeignKey(p => p.CategoryId)
-                  .OnDelete(DeleteBehavior.Restrict);
+            e.ToTable("Products");
+            e.HasOne(p => p.Category)
+             .WithMany(c => c.Products)
+             .HasForeignKey(p => p.CategoryID)
+             .HasConstraintName("FK_Products_Categories")
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(p => p.CategoryID)
+             .HasDatabaseName("IX_Products_CategoryID");
         });
     }
 }

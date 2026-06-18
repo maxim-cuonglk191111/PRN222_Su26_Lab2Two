@@ -31,11 +31,11 @@
             </div>
 
             <div class="mb-3">
-                <label asp-for="Product.CategoryId" class="form-label">Category</label>
-                <select asp-for="Product.CategoryId" asp-items="Model.CategoryList" class="form-select">
+                <label asp-for="Product.CategoryID" class="form-label">Category</label>
+                <select asp-for="Product.CategoryID" asp-items="Model.CategoryList" class="form-select">
                     <option value="">-- Select Category --</option>
                 </select>
-                <span asp-validation-for="Product.CategoryId" class="text-danger"></span>
+                <span asp-validation-for="Product.CategoryID" class="text-danger"></span>
             </div>
 
             <button type="submit" class="btn btn-primary">Create</button>

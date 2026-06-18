@@ -1,20 +1,13 @@
 using BusinessObjects.Models;
 using DataAccessObjects;
-
 namespace Repositories;
-
-public class ProductRepository : IProductRepository
-{
-    private readonly ProductDAO _productDAO;
-
-    public ProductRepository(ProductDAO productDAO)
-    {
-        _productDAO = productDAO;
-    }
-
-    public List<Product> GetProducts() => _productDAO.GetProducts();
-    public Product? GetProductById(int id) => _productDAO.GetProductById(id);
-    public void SaveProduct(Product product) => _productDAO.SaveProduct(product);
-    public void UpdateProduct(Product product) => _productDAO.UpdateProduct(product);
-    public void DeleteProduct(Product product) => _productDAO.DeleteProduct(product);
+public class ProductRepository : IProductRepository {
+    private readonly ProductDAO _dao;
+    public ProductRepository(ProductDAO dao) => _dao = dao;
+    public Task<List<Product>> GetAllAsync() => _dao.GetAllAsync();
+    public Task<Product?> GetByIdAsync(int id) => _dao.GetByIdAsync(id);
+    public Task AddAsync(Product p) => _dao.AddAsync(p);
+    public Task UpdateAsync(Product p) => _dao.UpdateAsync(p);
+    public Task DeleteAsync(int id) => _dao.DeleteAsync(id);
+    public Task<List<Product>> SearchAsync(string k) => _dao.SearchAsync(k);
 }

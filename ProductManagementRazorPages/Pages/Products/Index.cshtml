@@ -27,14 +27,14 @@
         @foreach (var product in Model.Products)
         {
             <tr>
-                <td>@product.ProductId</td>
+                <td>@product.ProductID</td>
                 <td>@product.ProductName</td>
-                <td>@product.UnitPrice.ToString("C")</td>
+                <td>@product.UnitPrice?.ToString("C")</td>
                 <td>@product.UnitsInStock</td>
                 <td>@(product.Category?.CategoryName ?? "N/A")</td>
                 <td>
-                    <a asp-page="Edit" asp-route-id="@product.ProductId" class="btn btn-sm btn-warning">Edit</a>
-                    <a asp-page="Delete" asp-route-id="@product.ProductId" class="btn btn-sm btn-danger">Delete</a>
+                    <a asp-page="Edit" asp-route-id="@product.ProductID" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-page="Delete" asp-route-id="@product.ProductID" class="btn btn-sm btn-danger">Delete</a>
                 </td>
             </tr>
         }

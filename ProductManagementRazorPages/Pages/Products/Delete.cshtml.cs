@@ -21,24 +21,24 @@ public class DeleteModel : PageModel
     [BindProperty]
     public Product Product { get; set; } = null!;
 
-    public IActionResult OnGet(int id)
+    public async Task<IActionResult> OnGetAsync(int id)
     {
-        if (HttpContext.Session.GetInt32("MemberId") == null)
+        if (HttpContext.Session.GetString("UserId") == null)
             return RedirectToPage("/Login");
 
-        Product = _productService.GetProductById(id) ?? new Product();
+        Product = await _productService.GetByIdAsync(id) ?? new Product();
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (HttpContext.Session.GetInt32("MemberId") == null)
+        if (HttpContext.Session.GetString("UserId") == null)
             return RedirectToPage("/Login");
 
-        var product = _productService.GetProductById(Product.ProductId);
+        var product = await _productService.GetByIdAsync(Product.ProductID);
         if (product != null)
         {
-            _productService.DeleteProduct(product);
+            await _productService.DeleteAsync(product.ProductID);
             await _hubContext.Clients.All.SendAsync("LoadAllItems");
         }
 

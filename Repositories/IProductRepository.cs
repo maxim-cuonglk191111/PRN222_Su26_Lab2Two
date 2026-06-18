@@ -1,12 +1,10 @@
 using BusinessObjects.Models;
-
 namespace Repositories;
-
-public interface IProductRepository
-{
-    List<Product> GetProducts();
-    Product? GetProductById(int id);
-    void SaveProduct(Product product);
-    void UpdateProduct(Product product);
-    void DeleteProduct(Product product);
+public interface IProductRepository {
+    Task<List<Product>> GetAllAsync();
+    Task<Product?> GetByIdAsync(int id);
+    Task AddAsync(Product p);
+    Task UpdateAsync(Product p);
+    Task DeleteAsync(int id);
+    Task<List<Product>> SearchAsync(string k);
 }

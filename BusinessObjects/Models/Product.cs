@@ -5,21 +5,26 @@ namespace BusinessObjects.Models;
 
 public class Product
 {
-    [Key]
-    public int ProductId { get; set; }
+    public int ProductID { get; set; }
 
-    [Required]
+    [Required(ErrorMessage = "Product name is required.")]
+    [MaxLength(40)]
+    [Display(Name = "Product Name")]
     public string ProductName { get; set; } = null!;
 
     [Required]
-    [Column(TypeName = "decimal(18,2)")]
-    public decimal UnitPrice { get; set; }
+    [Display(Name = "Category")]
+    public int CategoryID { get; set; }
 
-    [Required]
-    public int UnitsInStock { get; set; }
-
-    public int CategoryId { get; set; }
-
-    [ForeignKey(nameof(CategoryId))]
+    [ForeignKey(nameof(CategoryID))]
     public Category? Category { get; set; }
+
+    [Range(0, short.MaxValue, ErrorMessage = "Units in stock must be a non-negative value.")]
+    [Display(Name = "Units in Stock")]
+    public short? UnitsInStock { get; set; }
+
+    [Range(0.01, double.MaxValue, ErrorMessage = "Unit price must be a positive value.")]
+    [Column(TypeName = "money")]
+    [Display(Name = "Unit Price")]
+    public decimal? UnitPrice { get; set; }
 }

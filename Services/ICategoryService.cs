@@ -1,8 +1,6 @@
 using BusinessObjects.Models;
-
+using Repositories;
 namespace Services;
-
-public interface ICategoryService
-{
-    List<Category> GetCategories();
+public interface ICategoryService {
+    Task<List<Category>> GetAllAsync();
 }

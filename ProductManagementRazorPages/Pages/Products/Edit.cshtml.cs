@@ -26,28 +26,28 @@ public class EditModel : PageModel
 
     public SelectList CategoryList { get; set; } = null!;
 
-    public IActionResult OnGet(int id)
+    public async Task<IActionResult> OnGetAsync(int id)
     {
-        if (HttpContext.Session.GetInt32("MemberId") == null)
+        if (HttpContext.Session.GetString("UserId") == null)
             return RedirectToPage("/Login");
 
-        Product = _productService.GetProductById(id) ?? new Product();
-        CategoryList = new SelectList(_categoryService.GetCategories(), "CategoryId", "CategoryName");
+        Product = await _productService.GetByIdAsync(id) ?? new Product();
+        CategoryList = new SelectList(await _categoryService.GetAllAsync(), "CategoryID", "CategoryName");
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (HttpContext.Session.GetInt32("MemberId") == null)
+        if (HttpContext.Session.GetString("UserId") == null)
             return RedirectToPage("/Login");
 
         if (!ModelState.IsValid)
         {
-            CategoryList = new SelectList(_categoryService.GetCategories(), "CategoryId", "CategoryName");
+            CategoryList = new SelectList(await _categoryService.GetAllAsync(), "CategoryID", "CategoryName");
             return Page();
         }
 
-        _productService.UpdateProduct(Product);
+        await _productService.UpdateAsync(Product);
         await _hubContext.Clients.All.SendAsync("LoadAllItems");
         return RedirectToPage("Index");
     }

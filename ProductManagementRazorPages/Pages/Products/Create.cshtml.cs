@@ -26,27 +26,27 @@ public class CreateModel : PageModel
 
     public SelectList CategoryList { get; set; } = null!;
 
-    public IActionResult OnGet()
+    public async Task<IActionResult> OnGetAsync()
     {
-        if (HttpContext.Session.GetInt32("MemberId") == null)
+        if (HttpContext.Session.GetString("UserId") == null)
             return RedirectToPage("/Login");
 
-        CategoryList = new SelectList(_categoryService.GetCategories(), "CategoryId", "CategoryName");
+        CategoryList = new SelectList(await _categoryService.GetAllAsync(), "CategoryID", "CategoryName");
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (HttpContext.Session.GetInt32("MemberId") == null)
+        if (HttpContext.Session.GetString("UserId") == null)
             return RedirectToPage("/Login");
 
         if (!ModelState.IsValid)
         {
-            CategoryList = new SelectList(_categoryService.GetCategories(), "CategoryId", "CategoryName");
+            CategoryList = new SelectList(await _categoryService.GetAllAsync(), "CategoryID", "CategoryName");
             return Page();
         }
 
-        _productService.SaveProduct(Product);
+        await _productService.AddAsync(Product);
         await _hubContext.Clients.All.SendAsync("LoadAllItems");
         return RedirectToPage("Index");
     }

@@ -1,5 +1,6 @@
 using BusinessObjects;
 using BusinessObjects.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessObjects;
 
@@ -12,5 +13,8 @@ public class CategoryDAO
         _context = context;
     }
 
-    public List<Category> GetCategories() => _context.Categories.ToList();
+    public async Task<List<Category>> GetAllAsync()
+        => await _context.Categories.AsNoTracking()
+            .OrderBy(c => c.CategoryName)
+            .ToListAsync();
 }

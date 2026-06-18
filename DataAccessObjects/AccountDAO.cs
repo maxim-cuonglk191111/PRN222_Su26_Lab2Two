@@ -1,5 +1,6 @@
 using BusinessObjects;
 using BusinessObjects.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessObjects;
 
@@ -12,6 +13,11 @@ public class AccountDAO
         _context = context;
     }
 
-    public AccountMember? GetAccountById(int memberId) =>
-        _context.AccountMembers.FirstOrDefault(a => a.MemberId == memberId);
+    public async Task<AccountMember?> GetAccountByEmailAsync(string email)
+        => await _context.AccountMembers.AsNoTracking()
+            .FirstOrDefaultAsync(a => a.EmailAddress == email);
+
+    public async Task<AccountMember?> GetAccountByIdAsync(string id)
+        => await _context.AccountMembers.AsNoTracking()
+            .FirstOrDefaultAsync(a => a.MemberID == id);
 }

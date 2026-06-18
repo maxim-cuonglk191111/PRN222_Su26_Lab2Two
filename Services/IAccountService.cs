@@ -1,8 +1,7 @@
 using BusinessObjects.Models;
-
+using Repositories;
 namespace Services;
-
-public interface IAccountService
-{
-    AccountMember? GetAccountById(int memberId);
+public interface IAccountService {
+    Task<AccountMember?> GetAccountByEmailAsync(string email);
+    Task<AccountMember?> GetAccountByIdAsync(string id);
 }

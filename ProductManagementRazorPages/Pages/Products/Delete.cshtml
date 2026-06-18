@@ -11,11 +11,11 @@
 
 <dl class="row">
     <dt class="col-sm-3">ID</dt>
-    <dd class="col-sm-9">@Model.Product.ProductId</dd>
+    <dd class="col-sm-9">@Model.Product.ProductID</dd>
     <dt class="col-sm-3">Name</dt>
     <dd class="col-sm-9">@Model.Product.ProductName</dd>
     <dt class="col-sm-3">Price</dt>
-    <dd class="col-sm-9">@Model.Product.UnitPrice.ToString("C")</dd>
+    <dd class="col-sm-9">@Model.Product.UnitPrice?.ToString("C")</dd>
     <dt class="col-sm-3">Units In Stock</dt>
     <dd class="col-sm-9">@Model.Product.UnitsInStock</dd>
     <dt class="col-sm-3">Category</dt>
@@ -23,7 +23,7 @@
 </dl>
 
 <form method="post">
-    <input type="hidden" asp-for="Product.ProductId" />
+    <input type="hidden" asp-for="Product.ProductID" />
     <button type="submit" class="btn btn-danger">Delete</button>
     <a asp-page="Index" class="btn btn-secondary ms-2">Cancel</a>
 </form>

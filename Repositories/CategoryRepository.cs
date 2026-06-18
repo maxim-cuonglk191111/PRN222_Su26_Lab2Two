@@ -1,16 +1,8 @@
 using BusinessObjects.Models;
 using DataAccessObjects;
-
 namespace Repositories;
-
-public class CategoryRepository : ICategoryRepository
-{
-    private readonly CategoryDAO _categoryDAO;
-
-    public CategoryRepository(CategoryDAO categoryDAO)
-    {
-        _categoryDAO = categoryDAO;
-    }
-
-    public List<Category> GetCategories() => _categoryDAO.GetCategories();
+public class CategoryRepository : ICategoryRepository {
+    private readonly CategoryDAO _dao;
+    public CategoryRepository(CategoryDAO dao) => _dao = dao;
+    public Task<List<Category>> GetAllAsync() => _dao.GetAllAsync();
 }

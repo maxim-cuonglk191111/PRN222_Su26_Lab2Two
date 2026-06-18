@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Services;
@@ -14,7 +16,7 @@ public class LoginModel : PageModel
     }
 
     [BindProperty]
-    public int MemberId { get; set; }
+    public string EmailAddress { get; set; } = string.Empty;
 
     [BindProperty]
     public string MemberPassword { get; set; } = string.Empty;
@@ -23,21 +25,27 @@ public class LoginModel : PageModel
 
     public IActionResult OnGet()
     {
-        if (HttpContext.Session.GetInt32("MemberId") != null)
+        if (HttpContext.Session.GetString("UserId") != null)
             return RedirectToPage("/Products/Index");
         return Page();
     }
 
-    public IActionResult OnPost()
+    private string HashPassword(string password)
     {
-        var account = _accountService.GetAccountById(MemberId);
-        if (account == null || account.MemberPassword != MemberPassword || (account.MemberRole != 1 && account.MemberRole != 2))
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
+        return Convert.ToHexString(bytes).ToLower();
+    }
+
+    public async Task<IActionResult> OnPostAsync()
+    {
+        var account = await _accountService.GetAccountByEmailAsync(EmailAddress);
+        if (account == null || (account.MemberPassword != MemberPassword && account.MemberPassword != HashPassword(MemberPassword)))
         {
             ErrorMessage = "You do not have permission to do this function!";
             return Page();
         }
 
-        HttpContext.Session.SetInt32("MemberId", account.MemberId);
+        HttpContext.Session.SetString("UserId", account.MemberID);
         HttpContext.Session.SetInt32("MemberRole", account.MemberRole);
         return RedirectToPage("/Products/Index");
     }

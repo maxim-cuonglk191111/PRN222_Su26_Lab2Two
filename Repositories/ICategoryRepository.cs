@@ -1,8 +1,5 @@
 using BusinessObjects.Models;
-
 namespace Repositories;
-
-public interface ICategoryRepository
-{
-    List<Category> GetCategories();
+public interface ICategoryRepository {
+    Task<List<Category>> GetAllAsync();
 }
