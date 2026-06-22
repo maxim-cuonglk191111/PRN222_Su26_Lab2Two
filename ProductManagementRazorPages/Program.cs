@@ -7,9 +7,15 @@ using Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string not configured.");
+var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+if (string.IsNullOrEmpty(connectionString))
+{
+    connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+}
+if (string.IsNullOrEmpty(connectionString) || connectionString.Contains("YOUR_SERVER"))
+{
+    throw new InvalidOperationException("Database connection string is missing or contains YOUR_SERVER placeholder. Please update appsettings.Development.json or set the Environment Variable on the server.");
+}
 
 builder.Services.AddDbContext<MyStoreContext>(options =>
     options.UseSqlServer(connectionString));
@@ -39,7 +45,7 @@ var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
+    app.UseDeveloperExceptionPage();
     app.UseHsts();
 }
 
